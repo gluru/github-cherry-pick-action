@@ -30496,8 +30496,15 @@ function run() {
                 `--strategy-option=${(_a = inputs.strategyOption) !== null && _a !== void 0 ? _a : 'theirs'}`,
                 `${githubSha}`
             ]);
-            if (result.exitCode !== 0 && !result.stderr.includes(CHERRYPICK_EMPTY)) {
+            const isEmptyCherryPick = result.stdout.includes(CHERRYPICK_EMPTY) ||
+                result.stderr.includes(CHERRYPICK_EMPTY);
+            if (result.exitCode !== 0 && !isEmptyCherryPick) {
                 throw new Error(`Unexpected error: ${result.stderr}`);
+            }
+            if (isEmptyCherryPick) {
+                core.info('Cherry-pick resulted in an empty commit. The changes are already in the target branch.');
+                core.endGroup();
+                return;
             }
             core.endGroup();
             // Push new branch

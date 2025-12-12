@@ -66,7 +66,7 @@ jest.mock('../src/github-helper', () => {
 
 describe('run main', () => {
   beforeEach(() => {
-    mockedGetInputData = defaultMockedGetInputData
+    mockedGetInputData = {...defaultMockedGetInputData}
   })
 
   afterEach(() => {
@@ -160,6 +160,55 @@ describe('run main', () => {
         cherryPickBranch: 'my-custom-branch'
       }),
       'my-custom-branch'
+    )
+  })
+
+  test('exits gracefully when cherry-pick results in empty commit', async () => {
+    const CHERRYPICK_EMPTY =
+      'The previous cherry-pick is now empty, possibly due to conflict resolution.'
+
+    // Mock exec to return exit code 1 and the empty cherry-pick message for cherry-pick command
+    ;(exec.exec as jest.Mock).mockImplementation(
+      (
+        _gitPath: string,
+        params: string[],
+        options?: {listeners?: {stdout?: (data: Buffer) => void}}
+      ) => {
+        // Check if this is the cherry-pick command
+        if (params && params[0] === 'cherry-pick') {
+          // Simulate empty cherry-pick by writing to stdout
+          if (options?.listeners?.stdout) {
+            options.listeners.stdout(Buffer.from(CHERRYPICK_EMPTY))
+          }
+          return Promise.resolve(1) // exit code 1
+        }
+        return Promise.resolve(0)
+      }
+    )
+
+    await run()
+
+    // Should only have 4 groups (no push or PR creation)
+    expect(core.startGroup).toBeCalledTimes(4)
+    expect(core.startGroup).toHaveBeenCalledWith(
+      'Configuring the committer and author'
+    )
+    expect(core.startGroup).toHaveBeenCalledWith('Fetch all branchs')
+    expect(core.startGroup).toHaveBeenCalledWith(
+      'Create new branch cherry-pick-target-branch-XXXXXX from target-branch'
+    )
+    expect(core.startGroup).toHaveBeenCalledWith('Cherry picking')
+
+    // Push and PR creation should NOT be called
+    expect(core.startGroup).not.toHaveBeenCalledWith('Push new branch to remote')
+    expect(core.startGroup).not.toHaveBeenCalledWith('Opening pull request')
+
+    // createPullRequest should NOT be called
+    expect(createPullRequest).not.toHaveBeenCalled()
+
+    // Should log the informative message
+    expect(core.info).toHaveBeenCalledWith(
+      'Cherry-pick resulted in an empty commit. The changes are already in the target branch.'
     )
   })
 })
