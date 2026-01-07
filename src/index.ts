@@ -67,14 +67,17 @@ export async function run(): Promise<void> {
 
     // Cherry pick
     core.startGroup('Cherry picking')
-    const result = await gitExecution([
-      'cherry-pick',
-      '-m',
-      '1',
-      '--strategy=recursive',
-      `--strategy-option=${inputs.strategyOption ?? 'theirs'}`,
-      `${githubSha}`
-    ])
+    const result = await gitExecution(
+      [
+        'cherry-pick',
+        '-m',
+        '1',
+        '--strategy=recursive',
+        `--strategy-option=${inputs.strategyOption || 'theirs'}`,
+        `${githubSha}`
+      ],
+      true // ignoreReturnCode - we handle exit codes ourselves to detect empty commits
+    )
     const isEmptyCherryPick =
       result.stdout.includes(CHERRYPICK_EMPTY) ||
       result.stderr.includes(CHERRYPICK_EMPTY)
@@ -113,7 +116,10 @@ export async function run(): Promise<void> {
   }
 }
 
-async function gitExecution(params: string[]): Promise<GitOutput> {
+async function gitExecution(
+  params: string[],
+  ignoreReturnCode = false
+): Promise<GitOutput> {
   const result = new GitOutput()
   const stdout: string[] = []
   const stderr: string[] = []
@@ -126,7 +132,8 @@ async function gitExecution(params: string[]): Promise<GitOutput> {
       stderr: (data: Buffer) => {
         stderr.push(data.toString())
       }
-    }
+    },
+    ignoreReturnCode
   }
 
   const gitPath = await io.which('git', true)

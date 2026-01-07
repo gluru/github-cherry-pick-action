@@ -30438,7 +30438,6 @@ const utils = __importStar(__nccwpck_require__(1314));
 const CHERRYPICK_EMPTY = 'The previous cherry-pick is now empty, possibly due to conflict resolution.';
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a;
         try {
             const inputs = {
                 token: core.getInput('token'),
@@ -30493,9 +30492,10 @@ function run() {
                 '-m',
                 '1',
                 '--strategy=recursive',
-                `--strategy-option=${(_a = inputs.strategyOption) !== null && _a !== void 0 ? _a : 'theirs'}`,
+                `--strategy-option=${inputs.strategyOption || 'theirs'}`,
                 `${githubSha}`
-            ]);
+            ], true // ignoreReturnCode - we handle exit codes ourselves to detect empty commits
+            );
             const isEmptyCherryPick = result.stdout.includes(CHERRYPICK_EMPTY) ||
                 result.stderr.includes(CHERRYPICK_EMPTY);
             if (result.exitCode !== 0 && !isEmptyCherryPick) {
@@ -30532,8 +30532,8 @@ function run() {
     });
 }
 exports.run = run;
-function gitExecution(params) {
-    return __awaiter(this, void 0, void 0, function* () {
+function gitExecution(params_1) {
+    return __awaiter(this, arguments, void 0, function* (params, ignoreReturnCode = false) {
         const result = new GitOutput();
         const stdout = [];
         const stderr = [];
@@ -30545,7 +30545,8 @@ function gitExecution(params) {
                 stderr: (data) => {
                     stderr.push(data.toString());
                 }
-            }
+            },
+            ignoreReturnCode
         };
         const gitPath = yield io.which('git', true);
         result.exitCode = yield exec.exec(gitPath, params, options);

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm test:*)",
+      "Bash(git -C /Users/emmanuelfontan/github/kare/github-cherry-pick-action status)",
+      "Bash(git -C /Users/emmanuelfontan/github/kare/github-cherry-pick-action log --oneline -5)",
+      "Bash(npm run build:*)"
+    ]
+  }
+}
