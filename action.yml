@@ -50,6 +50,13 @@ inputs:
     required: false
   cherry-pick-branch:
     description: "Name of the new cherry pick branch."
+  strategy-option:
+    description: >
+      The strategy option for cherry-pick conflict resolution
+      (e.g., 'theirs', 'ours'). When empty, conflicts will cause the
+      cherry-pick to fail, requiring manual resolution.
+    required: false
+    default: ""
   force:
     description: "Forcefully push the branch to remote branch"
     required: false

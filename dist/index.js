@@ -30487,14 +30487,17 @@ function run() {
             core.endGroup();
             // Cherry pick
             core.startGroup('Cherry picking');
-            const result = yield gitExecution([
+            const cherryPickArgs = [
                 'cherry-pick',
                 '-m',
                 '1',
-                '--strategy=recursive',
-                `--strategy-option=${inputs.strategyOption || 'theirs'}`,
-                `${githubSha}`
-            ], true // ignoreReturnCode - we handle exit codes ourselves to detect empty commits
+                '--strategy=recursive'
+            ];
+            if (inputs.strategyOption) {
+                cherryPickArgs.push(`--strategy-option=${inputs.strategyOption}`);
+            }
+            cherryPickArgs.push(`${githubSha}`);
+            const result = yield gitExecution(cherryPickArgs, true // ignoreReturnCode - we handle exit codes ourselves to detect empty commits
             );
             const isEmptyCherryPick = result.stdout.includes(CHERRYPICK_EMPTY) ||
                 result.stderr.includes(CHERRYPICK_EMPTY);
