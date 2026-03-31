@@ -67,15 +67,20 @@ export async function run(): Promise<void> {
 
     // Cherry pick
     core.startGroup('Cherry picking')
+    const cherryPickArgs = [
+      'cherry-pick',
+      '-m',
+      '1',
+      '--strategy=recursive'
+    ]
+    if (inputs.strategyOption) {
+      cherryPickArgs.push(
+        `--strategy-option=${inputs.strategyOption}`
+      )
+    }
+    cherryPickArgs.push(`${githubSha}`)
     const result = await gitExecution(
-      [
-        'cherry-pick',
-        '-m',
-        '1',
-        '--strategy=recursive',
-        `--strategy-option=${inputs.strategyOption || 'theirs'}`,
-        `${githubSha}`
-      ],
+      cherryPickArgs,
       true // ignoreReturnCode - we handle exit codes ourselves to detect empty commits
     )
     const isEmptyCherryPick =
